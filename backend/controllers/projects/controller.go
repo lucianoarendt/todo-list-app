@@ -1,7 +1,6 @@
 package projects
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -73,17 +72,19 @@ func (t *projectServiceImpl) Read(c *fiber.Ctx) error {
 	}
 
 	var project []models.Project
-	if err := database.DB.Debug().
-		Where("projects.owner=?", claims.Issuer).
-		Find(&project); err != nil {
-		fmt.Println(err)
+	if err := database.DB.Where("projects.owner=?", claims.Issuer).Find(&project).Error; err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "error on read a project",
+		})
 	}
 
 	for idx, i := range project {
-		if err := database.DB.Debug().
-			Where("tasks.project=?", strconv.Itoa(int(i.ID))).
-			Find(&project[idx].Tasks); err != nil {
-			fmt.Println(err)
+		if err := database.DB.Where("tasks.project=?", strconv.Itoa(int(i.ID))).Find(&project[idx].Tasks).Error; err != nil {
+			c.Status(fiber.StatusInternalServerError)
+			return c.JSON(fiber.Map{
+				"message": "error on read a project's task",
+			})
 		}
 	}
 
@@ -107,12 +108,13 @@ func (t *projectServiceImpl) Update(c *fiber.Ctx) error {
 	}
 
 	var project models.Project
-	database.DB.Debug().Where("id=?", data.ID).Find(&project)
+	database.DB.Where("id=?", data.ID).Find(&project)
 	project.Title = data.Title
 	database.DB.Save(&project)
 
 	return c.JSON(project)
 }
+
 func (t *projectServiceImpl) Delete(c *fiber.Ctx) error {
 	id := c.Query("id")
 
@@ -126,12 +128,7 @@ func (t *projectServiceImpl) Delete(c *fiber.Ctx) error {
 	}
 
 	var project models.Project
-	if err := database.DB.Debug().Delete("owner=?", id); err != nil {
-		c.Status(fiber.StatusInternalServerError)
-		return c.JSON(fiber.Map{
-			"message": "error on delete project",
-		})
-	}
+	database.DB.Delete(&project, id)
 
 	return c.JSON(project)
 }

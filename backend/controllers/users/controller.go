@@ -35,12 +35,17 @@ func (u *userServiceImpl) Create(c *fiber.Ctx) error {
 	pass, _ := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
 
 	user := models.User{
-		Name:     data.Email,
+		Name:     data.Name,
 		Email:    data.Email,
 		Password: pass,
 	}
 
-	database.DB.Create(&user)
+	if err := database.DB.Create(&user).Error; err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"message": "error on create user",
+		})
+	}
 
 	return c.JSON(user)
 }

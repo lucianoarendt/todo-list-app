@@ -11,7 +11,7 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	conn, err := gorm.Open(mysql.Open("root:root@/db"), &gorm.Config{})
+	conn, err := gorm.Open(mysql.Open("root:root@/db?parseTime=true"), &gorm.Config{})
 
 	if err != nil {
 		panic(fmt.Sprintf("Could not connect to the database, Error: %v", err))

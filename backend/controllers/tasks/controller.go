@@ -1,6 +1,11 @@
 package tasks
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/rafaelmf3/todo-list-app/backend/database"
+	"github.com/rafaelmf3/todo-list-app/backend/middleware"
+	"github.com/rafaelmf3/todo-list-app/backend/models"
+)
 
 type TaskService interface {
 	Create(c *fiber.Ctx) error
@@ -20,14 +25,112 @@ func NewTaskService(secret string) TaskService {
 }
 
 func (t *taskServiceImpl) Create(c *fiber.Ctx) error {
-	return nil
+	var data models.Task
+
+	if err := c.BodyParser(&data); err != nil {
+		return err
+	}
+
+	_, err := middleware.Auth(t.secret, c)
+
+	if err != nil {
+		c.Status(fiber.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
+	}
+
+	var project models.Project
+	if err := database.DB.Where("id=?", data.Project).Find(&project).Error; err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "error on get Project",
+		})
+	}
+
+	task := models.Task{
+		Project:     project.ID,
+		Description: data.Description,
+	}
+
+	database.DB.Create(&task)
+
+	return c.JSON(task)
 }
+
 func (t *taskServiceImpl) Read(c *fiber.Ctx) error {
-	return nil
+	_, err := middleware.Auth(t.secret, c)
+
+	if err != nil {
+		c.Status(fiber.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
+	}
+
+	id := c.Query("id")
+
+	var task []models.Task
+	if err := database.DB.Where("id=?", id).Find(&task).Error; err != nil {
+		c.Status(fiber.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "error on get a task",
+		})
+	}
+
+	return c.JSON(task)
 }
+
 func (t *taskServiceImpl) Update(c *fiber.Ctx) error {
-	return nil
+	var data models.Task
+
+	if err := c.BodyParser(&data); err != nil {
+		return err
+	}
+
+	_, err := middleware.Auth(t.secret, c)
+
+	if err != nil {
+		c.Status(fiber.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
+	}
+
+	id := c.Query("id")
+
+	var task models.Task
+	if err := database.DB.Where("id=?", id).Find(&task).Error; err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "error on get Task",
+		})
+	}
+	if data.Description != "" {
+		task.Description = data.Description
+	}
+	if data.Status != models.StatusNew || task.Status != models.StatusDone {
+		task.Status = data.Status
+	}
+	database.DB.Save(&task)
+
+	return c.JSON(task)
 }
+
 func (t *taskServiceImpl) Delete(c *fiber.Ctx) error {
-	return nil
+	id := c.Query("id")
+
+	_, err := middleware.Auth(t.secret, c)
+
+	if err != nil {
+		c.Status(fiber.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
+	}
+
+	var task models.Task
+	database.DB.Delete(&task, id)
+
+	return c.JSON(task)
 }
