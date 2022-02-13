@@ -3,3 +3,6 @@ database/data/*
 
 backend/go.mod
 backend/go.sum
+
+frontend/node_modules
+package-lock.json
