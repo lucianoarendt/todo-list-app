@@ -1,19 +1,32 @@
-package controllers
+package auth
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"github.com/rafaelmf3/todo-list-app/backend/database"
 	"github.com/rafaelmf3/todo-list-app/backend/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
-const SecretKey = "secret"
+type AuthService interface {
+	Login(c *fiber.Ctx) error
+	Logout(c *fiber.Ctx) error
+}
 
-func Login(c *fiber.Ctx) error {
+type authServiceImpl struct {
+	secret string
+}
+
+func NewAuthService(secret string) AuthService {
+	return &authServiceImpl{
+		secret: secret,
+	}
+}
+
+func (a *authServiceImpl) Login(c *fiber.Ctx) error {
 	var data models.User
 
 	if err := c.BodyParser(&data); err != nil {
@@ -24,7 +37,7 @@ func Login(c *fiber.Ctx) error {
 
 	database.DB.Where("email = ?", data.Email).First(&user)
 
-	if user.ID == uuid.Nil {
+	if user.ID == 0 {
 		c.Status(fiber.StatusNotFound)
 		return c.JSON(fiber.Map{
 			"massage": "user not found",
@@ -39,11 +52,11 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		Issuer:    user.ID.String(),
+		Issuer:    strconv.Itoa(int(user.ID)),
 		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	token, err := claims.SignedString([]byte(SecretKey))
+	token, err := claims.SignedString([]byte(a.secret))
 
 	if err != nil {
 		c.Status(fiber.StatusInternalServerError)
@@ -66,7 +79,7 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
-func Logout(c *fiber.Ctx) error {
+func (a *authServiceImpl) Logout(c *fiber.Ctx) error {
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    "",

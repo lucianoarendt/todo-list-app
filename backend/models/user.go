@@ -1,10 +1,9 @@
 package models
 
-import "github.com/google/uuid"
-
 type User struct {
-	ID       uuid.UUID `json:"id" gorm:"default:uuid_generate_v3()"`
-	Name     string    `json:"name"`
-	Email    string    `json:"email" gorm:"unique"`
-	Password []byte    `json:"-"`
+	ID       uint      `json:"id" db:"id" gorm:"primaryKey"`
+	Name     string    `json:"name" db:"name"`
+	Email    string    `json:"email" db:"email" gorm:"unique"`
+	Password []byte    `json:"-" db:"-"`
+	Projects []Project `json:"projects" db:"projects" gorm:"foreignKey:Owner"`
 }

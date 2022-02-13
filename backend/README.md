@@ -13,7 +13,7 @@ Go Install V.16
 
 - Gorm
  to install:
-    `go get -u gorm.io/gorm `
+    `go get -u gorm.io/gorm`
 
 - Gorm mysql-driver
  to install:

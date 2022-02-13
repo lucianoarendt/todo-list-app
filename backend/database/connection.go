@@ -19,5 +19,9 @@ func Connect() {
 
 	DB = conn
 
-	conn.AutoMigrate(&models.User{})
+	err = conn.AutoMigrate(&models.User{}, &models.Project{}, &models.Task{})
+
+	if err != nil {
+		panic(fmt.Sprintf("Could not migrate to the database, Error: %v", err))
+	}
 }
