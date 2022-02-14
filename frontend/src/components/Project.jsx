@@ -1,9 +1,5 @@
 import React from 'react'
-import {Card,ListGroup} from 'react-bootstrap';
-import ListGroupItem from 'react-bootstrap/ListGroupItem';
-import Form from 'react-bootstrap/Form';
-import Container from 'react-bootstrap/Container';
-import Button from 'react-bootstrap/Button';
+import {Card,ListGroup,Button} from 'react-bootstrap';
 import { GoPencil, GoTrashcan } from "react-icons/go"
 
 
