@@ -1,8 +1,6 @@
 package users
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/rafaelmf3/todo-list-app/backend/database"
 	"github.com/rafaelmf3/todo-list-app/backend/middleware"
@@ -61,12 +59,19 @@ func (u *userServiceImpl) Read(c *fiber.Ctx) error {
 	}
 
 	var user models.User
-	if err := database.DB.Joins("JOIN projects ON projects.owner = users.id").
-		Where("users.id=?", claims.Issuer).
-		Find(&user).
-		Select("projects.id, title, owner, projects.status").
-		Find(&user.Projects); err != nil {
-		fmt.Println(err)
+	if err := database.DB.Debug().Where("users.id=?", claims.Issuer).First(&user).Error; err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"message": "user not found",
+		})
+	}
+
+	if err := database.DB.Debug().Where("owner=?", claims.Issuer).Find(&user.Projects).Error; err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"message": "user not found",
+		})
+
 	}
 
 	return c.JSON(user)
