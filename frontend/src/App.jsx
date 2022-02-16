@@ -6,22 +6,11 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Home } from './pages/Home';
 import Nav from './components/Navbar';
-import { AuthProvider, AuthContext } from './Store/Context';
+import { AuthProvider, AuthContext } from './Store/AuthContext';
+import { UserProvider, UserContext } from './Store/UserContext';
+import ReadUser from './services/users';
 
 function App() {
-
-  // useEffect(() => {
-  //   async function fetchUser() {
-  //     const response = await fetch('http://localhost:8000/api/user/read', {
-  //       headers: { 'Content-Type': 'application/json' },
-  //       credentials: 'include',
-  //     });
-  //     const content = await response.json();
-  //     setName(content.name);
-  //   }
-  //   fetchUser();
-  //   console.log(name);
-  // }, []);
 
   const Private = ({ children }) => {
     const { authenticated, loading } = useContext(AuthContext);
@@ -40,16 +29,14 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <AuthProvider>
-          <Nav/>
-          <Routes>
-            <Route exact path="/" element={
-              <Private>
-                <Home/>
-              </Private>
-            }/>
-            <Route path="/login" element={<Login/>}/>
-            <Route path="/register" element={<Register/>} />
-          </Routes>
+          <UserProvider>
+            <Nav/>
+            <Routes>
+              <Route exact path="/" element={<Home/>}/>
+              <Route path="/login" element={<Login/>}/>
+              <Route path="/register" element={<Register/>} />
+            </Routes>
+          </UserProvider>
         </AuthProvider>
       </BrowserRouter>
     </div>

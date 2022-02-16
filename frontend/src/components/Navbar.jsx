@@ -1,12 +1,19 @@
-import React, {useContext} from 'react';
-import { AuthContext } from '../Store/Context';
+import React, {useContext, useEffect} from 'react';
+import { AuthContext } from '../Store/AuthContext';
+import { UserContext } from '../Store/UserContext';
 import { Link } from 'react-router-dom';
 import Navbar from 'react-bootstrap/Navbar';
 import Container from 'react-bootstrap/Container';
 
 const Nav = () => {
   const {authenticated, user, logout} = useContext(AuthContext);
+  const {userDetails} = useContext(UserContext);
 
+  // useEffect(() => {
+  //   console.log(userDetails)
+  //   console.log(authenticated)
+  // }, [userDetails]);
+  
   let menu;
 
   if (!authenticated) {
@@ -25,7 +32,7 @@ const Nav = () => {
       <Container style={{display: 'flex'}}>
         <Navbar.Collapse className="justify-content-center">
           <Navbar.Text>
-            Signed in as: {user.name}
+            Signed in as: {userDetails.name}
           </Navbar.Text>
         </Navbar.Collapse>
         <Navbar.Collapse className="justify-content-end" onClick={logout}>

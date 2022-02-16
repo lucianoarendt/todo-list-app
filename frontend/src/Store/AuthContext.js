@@ -1,3 +1,5 @@
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import React, { createContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -17,37 +20,32 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    console.log('login auth', email, password);
-    fetch('http://localhost:8000/api/login', {
-      method: 'POST',
+    const response = await axios.post('http://localhost:8000/api/login', {
+        email,
+        password
+      },{
+      withCredentials: true,
       headers: {'Content-Type': 'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-          email,
-          password
-      })
-    }).then(res => {
-      localStorage.setItem('user', JSON.stringify(res));
-      navigate("/")
     })
+    const content = await response.data
+    localStorage.setItem('user', JSON.stringify(content));
+    setAuthenticated(true);
+    navigate("/")
   };
 
   const logout = async () => {
-    console.log('logout');
-
-    await fetch('http://localhost:8000/api/logout', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        credentials: 'include',
+    const response = await axios.post('http://localhost:8000/api/logout', {
+        withCredentials: 'include',
     });
-
+    Cookies.remove('jwt');
     localStorage.removeItem('user');
+    setAuthenticated(false);
     navigate('/login');
   };
 
   return (
     <AuthContext.Provider
-      value={{ authenticated: !!user, user, login, logout}}
+      value={{ authenticated, user, login, logout, loading}}
     >
       {children}
     </AuthContext.Provider>

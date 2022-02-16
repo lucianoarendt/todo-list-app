@@ -1,4 +1,4 @@
-import {AuthContext} from '../Store/Context'
+import {AuthContext} from '../Store/AuthContext'
 import { useContext } from 'react'
 
 export function getUser() {

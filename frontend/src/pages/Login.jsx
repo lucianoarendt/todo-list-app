@@ -1,5 +1,6 @@
 import React, {useState, useContext} from 'react';
-import { AuthContext } from '../Store/Context';
+import { AuthContext } from '../Store/AuthContext';
+import { UserContext } from '../Store/UserContext';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
@@ -8,10 +9,12 @@ export const Login = () => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const {login} = useContext(AuthContext);
+    const {readUser} = useContext(UserContext);
 
     const submit = async (e) => {
         e.preventDefault();
         login(email, password);
+        readUser();
     }
         
     return (
