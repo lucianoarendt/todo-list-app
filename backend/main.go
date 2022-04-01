@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/rafaelmf3/todo-list/database"
+	"github.com/rafaelmf3/todo-list/routes"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/rafaelmf3/todo-list-app/backend/database"
-	"github.com/rafaelmf3/todo-list-app/backend/routes"
 )
 
 func main() {
@@ -18,5 +21,7 @@ func main() {
 
 	routes.Setup(app)
 
-	app.Listen(":8000")
+	if err := app.Listen(":8001"); err != nil {
+		fmt.Println(err)
+	}
 }

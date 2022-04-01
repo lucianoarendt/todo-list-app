@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/rafaelmf3/todo-list/database"
+	"github.com/rafaelmf3/todo-list/models"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/rafaelmf3/todo-list-app/backend/database"
-	"github.com/rafaelmf3/todo-list-app/backend/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

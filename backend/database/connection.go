@@ -3,7 +3,8 @@ package database
 import (
 	"fmt"
 
-	"github.com/rafaelmf3/todo-list-app/backend/models"
+	"github.com/rafaelmf3/todo-list/models"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -19,7 +20,7 @@ func Connect() {
 
 	DB = conn
 
-	err = conn.AutoMigrate(&models.User{}, &models.Project{}, &models.Task{})
+	err = conn.AutoMigrate(&models.User{}, &models.Project{}, &models.Task{}, &models.List{}, &models.Symbol{})
 
 	if err != nil {
 		panic(fmt.Sprintf("Could not migrate to the database, Error: %v", err))

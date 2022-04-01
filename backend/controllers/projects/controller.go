@@ -3,10 +3,11 @@ package projects
 import (
 	"strconv"
 
+	"github.com/rafaelmf3/todo-list/database"
+	"github.com/rafaelmf3/todo-list/middleware"
+	"github.com/rafaelmf3/todo-list/models"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/rafaelmf3/todo-list-app/backend/database"
-	"github.com/rafaelmf3/todo-list-app/backend/middleware"
-	"github.com/rafaelmf3/todo-list-app/backend/models"
 )
 
 type ProjectService interface {

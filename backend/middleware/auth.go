@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
 )
 
 func Auth(secret string, c *fiber.Ctx) (*jwt.StandardClaims, error) {

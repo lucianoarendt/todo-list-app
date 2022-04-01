@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"github.com/rafaelmf3/todo-list-app/backend/controllers/auth"
-	"github.com/rafaelmf3/todo-list-app/backend/controllers/projects"
-	"github.com/rafaelmf3/todo-list-app/backend/controllers/tasks"
-	"github.com/rafaelmf3/todo-list-app/backend/controllers/users"
+	"github.com/rafaelmf3/todo-list/controllers/auth"
+	"github.com/rafaelmf3/todo-list/controllers/lists"
+	"github.com/rafaelmf3/todo-list/controllers/projects"
+	"github.com/rafaelmf3/todo-list/controllers/tasks"
+	"github.com/rafaelmf3/todo-list/controllers/users"
 )
 
 const SecretKey = "secret"
@@ -14,6 +15,7 @@ type Controller struct {
 	Auth    auth.AuthService
 	Project projects.ProjectService
 	Task    tasks.TaskService
+	List    lists.ListService
 }
 
 func Start() *Controller {
@@ -22,6 +24,7 @@ func Start() *Controller {
 		Auth:    auth.NewAuthService(SecretKey),
 		Task:    tasks.NewTaskService(SecretKey),
 		Project: projects.NewProjectService(SecretKey),
+		List:    lists.NewListService(SecretKey),
 	}
 	return controllers
 }
