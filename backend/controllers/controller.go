@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/rafaelmf3/todo-list/controllers/auth"
-	"github.com/rafaelmf3/todo-list/controllers/lists"
+	"github.com/rafaelmf3/todo-list/controllers/lists/other"
 	"github.com/rafaelmf3/todo-list/controllers/projects"
 	"github.com/rafaelmf3/todo-list/controllers/tasks"
 	"github.com/rafaelmf3/todo-list/controllers/users"
@@ -15,7 +15,7 @@ type Controller struct {
 	Auth    auth.AuthService
 	Project projects.ProjectService
 	Task    tasks.TaskService
-	List    lists.ListService
+	List    other.ListService
 }
 
 func Start() *Controller {
@@ -24,7 +24,7 @@ func Start() *Controller {
 		Auth:    auth.NewAuthService(SecretKey),
 		Task:    tasks.NewTaskService(SecretKey),
 		Project: projects.NewProjectService(SecretKey),
-		List:    lists.NewListService(SecretKey),
+		List:    other.NewListService(SecretKey),
 	}
 	return controllers
 }

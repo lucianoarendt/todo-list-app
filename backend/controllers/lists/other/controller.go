@@ -1,9 +1,8 @@
-package lists
+package other
 
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/patrickmn/go-cache"
 	"github.com/rafaelmf3/todo-list/database"
@@ -39,6 +38,7 @@ const MaxListsAmount = 10
 const MaxSimbolsAmount = 50
 
 func (l *listServiceImpl) Create(c *fiber.Ctx) error {
+	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
 
 	if err != nil {
@@ -47,7 +47,9 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	//---------------
 
+	//mounts body
 	var bodyData models.List
 	if err := c.BodyParser(&bodyData); err != nil {
 		return err
@@ -55,7 +57,9 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 
 	userID, _ := strconv.Atoi(claims.Issuer)
 	bodyData.UserID = uint(userID)
+	//--------------
 
+	//validates max list amount
 	var count int64
 	database.DB.Model(&models.List{}).Where("user_id=?", claims.Issuer).Count(&count)
 
@@ -66,6 +70,7 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 			"amount":  MaxListsAmount,
 		})
 	}
+	//-----------------------
 
 	if err := database.DB.Create(&bodyData).Error; err != nil {
 		c.Status(fiber.StatusBadRequest)
@@ -75,8 +80,17 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	//l.cache.Delete(claims.Issuer)
+	//Handles cache
+	ids, userFound := l.cache.Get(claims.Issuer)
+	if userFound {
+		//At user level
+		idsSlice := ids.([]string)
+		idsSlice = append(idsSlice, strconv.Itoa(int(bodyData.ID)))
+		l.cache.SetDefault(claims.Issuer, idsSlice)
+	}
+	//At list level
 	l.cache.SetDefault(fmt.Sprintf("%s_%d", claims.Issuer, bodyData.ID), bodyData)
+	//---------------
 
 	return c.JSON(bodyData)
 }
@@ -84,6 +98,7 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 func (l *listServiceImpl) Read(c *fiber.Ctx) error {
 	id := c.Query("id")
 
+	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
 
 	if err != nil {
@@ -92,6 +107,7 @@ func (l *listServiceImpl) Read(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	//---------------
 
 	listCache, existsOnCache := l.cache.Get(fmt.Sprintf("%s_%s", claims.Issuer, id))
 
@@ -129,6 +145,7 @@ func (l *listServiceImpl) Read(c *fiber.Ctx) error {
 }
 
 func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error {
+	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
 
 	if err != nil {
@@ -137,8 +154,9 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	//---------------
 
-	_, existsOnCache := l.cache.Get(claims.Issuer)
+	lists, existsOnCache := l.getCacheLists(claims.Issuer)
 
 	if !existsOnCache {
 		var lists []models.List
@@ -150,6 +168,7 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error {
 			})
 		}
 
+		var ids []string
 		for i := range lists {
 			if err := database.DB.Where("list_id=?", lists[i].ID).Find(&lists[i].Symbols).Error; err != nil {
 				c.Status(fiber.StatusBadRequest)
@@ -158,9 +177,10 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error {
 					"err":     err.Error(),
 				})
 			}
+			ids = append(ids, strconv.Itoa(int(lists[i].ID)))
 		}
 
-		l.cache.SetDefault(claims.Issuer, true)
+		l.cache.SetDefault(claims.Issuer, ids)
 		for _, list := range lists {
 			l.cache.SetDefault(fmt.Sprintf("%s_%d", claims.Issuer, list.ID), list)
 		}
@@ -168,14 +188,13 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error {
 		return c.JSON(lists)
 	}
 
-	lists := l.getCacheLists(claims.Issuer)
-
 	return c.JSON(lists)
 }
 
 func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 	id := c.Query("id")
 
+	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
 
 	if err != nil {
@@ -184,12 +203,19 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	//---------------
 
+	//Mounts Body
 	var bodyData models.List
 	if err := c.BodyParser(&bodyData); err != nil {
 		return err
 	}
 
+	userID, _ := strconv.Atoi(claims.Issuer)
+	bodyData.UserID = uint(userID)
+	//------------
+
+	//Gets list and validates inexistence
 	var list models.List
 	if err := database.DB.Where("user_id=? AND id=?", claims.Issuer, id).Find(&list).Error; err != nil {
 		c.Status(fiber.StatusInternalServerError)
@@ -199,6 +225,15 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 		})
 	}
 
+	if list.ID == 0 {
+		c.Status(fiber.StatusNotFound)
+		return c.JSON(fiber.Map{
+			"message": "List Not Found",
+		})
+	}
+	//----------------
+
+	//Updates list
 	list.IsDefault = bodyData.IsDefault
 	list.Name = bodyData.Name
 	list.UserID = bodyData.UserID
@@ -207,9 +242,24 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 		database.DB.Where("list_id=?", id).Delete(&symbol)
 
 		list.Symbols = bodyData.Symbols
+	} else {
+		cacheList, existsOnCache := l.cache.Get(fmt.Sprintf("%s_%s", claims.Issuer, id))
+		if existsOnCache {
+			cacheAsList := cacheList.(models.List)
+			list.Symbols = cacheAsList.Symbols
+		} else {
+			if err := database.DB.Where("list_id=?", list.ID).Find(&list.Symbols).Error; err != nil {
+				c.Status(fiber.StatusBadRequest)
+				return c.JSON(fiber.Map{
+					"message": "error finding the symbols",
+					"err":     err.Error(),
+				})
+			}
+		}
 	}
 
 	database.DB.Where("id=?", id).Save(&list)
+	//-----------------
 
 	l.cache.SetDefault(fmt.Sprintf("%s_%s", claims.Issuer, id), list)
 
@@ -219,6 +269,7 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 func (l *listServiceImpl) Delete(c *fiber.Ctx) error {
 	id := c.Query("id")
 
+	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
 
 	if err != nil {
@@ -227,6 +278,7 @@ func (l *listServiceImpl) Delete(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	//----------------
 
 	var list models.List
 	database.DB.Where("id=?", id).Find(&list)
@@ -236,6 +288,7 @@ func (l *listServiceImpl) Delete(c *fiber.Ctx) error {
 			"id":      id,
 		})
 	}
+
 	if err := database.DB.Delete(&list, id).Error; err != nil {
 		c.Status(fiber.StatusUnauthorized)
 		return c.JSON(fiber.Map{
@@ -244,7 +297,23 @@ func (l *listServiceImpl) Delete(c *fiber.Ctx) error {
 		})
 	}
 
+	//Handles Cache
+	ids, userFound := l.cache.Get(claims.Issuer)
+	idsSlice := ids.([]string)
+	if userFound {
+		//Delete id from user cache
+		for i, e := range idsSlice {
+			if e == id {
+				idsSlice[i] = idsSlice[len(idsSlice)-1]
+				idsSlice = idsSlice[:len(idsSlice)-1]
+				break
+			}
+		}
+		l.cache.SetDefault(claims.Issuer, idsSlice)
+		//-----------------------
+	}
 	l.cache.Delete(fmt.Sprintf("%s_%s", claims.Issuer, id))
+	//-----------------
 
 	return c.JSON(fiber.Map{
 		"message": "List successfully deleted",
@@ -254,6 +323,7 @@ func (l *listServiceImpl) Delete(c *fiber.Ctx) error {
 func (l *listServiceImpl) DeleteSymbol(c *fiber.Ctx) error {
 	id := c.Query("id")
 
+	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
 
 	if err != nil {
@@ -262,7 +332,9 @@ func (l *listServiceImpl) DeleteSymbol(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	//-------------
 
+	//Gets Symbol and validates existence
 	var symbol models.Symbol
 	database.DB.Where("id=?", id).Find(&symbol)
 
@@ -273,6 +345,7 @@ func (l *listServiceImpl) DeleteSymbol(c *fiber.Ctx) error {
 			"id":      id,
 		})
 	}
+	//-------------------------
 
 	if err := database.DB.Delete(&symbol, id).Error; err != nil {
 		c.Status(fiber.StatusUnauthorized)
@@ -298,7 +371,6 @@ func (l *listServiceImpl) DeleteSymbol(c *fiber.Ctx) error {
 			if e.ID == uint(symbolID) {
 				SymbolsCopy[i] = SymbolsCopy[len(SymbolsCopy)-1]
 				SymbolsCopy = SymbolsCopy[:len(SymbolsCopy)-1]
-				break
 			}
 		}
 		//-----------------
@@ -376,20 +448,24 @@ func (l *listServiceImpl) CreateSymbol(c *fiber.Ctx) error {
 		cacheAsList.Symbols = append(SymbolsCopy, bodyData)
 		l.cache.SetDefault(cacheKey, cacheAsList)
 	}
-
 	//--------------------
 	return c.JSON(bodyData)
 }
 
-func (l *listServiceImpl) getCacheLists(userID string) []models.List {
-	itemsMap := l.cache.Items()
+func (l *listServiceImpl) getCacheLists(userID string) ([]models.List, bool) {
 	var lists []models.List
 
-	for k := range itemsMap {
-		if strings.Contains(k, fmt.Sprintf("%s_", userID)) {
-			lists = append(lists, itemsMap[k].Object.(models.List))
+	ids, foundUser := l.cache.Get(userID)
+	if foundUser {
+		idsAsSlice := ids.([]string)
+
+		for _, e := range idsAsSlice {
+			listCache, _ := l.cache.Get(userID + "_" + e)
+			listCacheAsList := listCache.(models.List)
+
+			lists = append(lists, listCacheAsList)
 		}
 	}
 
-	return lists
+	return lists, foundUser
 }
