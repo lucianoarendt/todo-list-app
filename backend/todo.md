@@ -18,8 +18,16 @@ Update      OK        NotOK/ok
 CreateSym   NotOK/ok  NotOK/ok
 DeleteSym   NotOK/ok  NotOK/ok
 
+Create 1-> Read 2(OK) -> Update 1,2-> Read 1,2(OK)-> CreateSymbol 1,2 -> Read 1,2 (OK)-> DeleteSymbol 1,2 (OK)
+
+ -> CreateSymbol, DeleteSymbol ? (NoCache)
+
+ReadAll -> all (OK)
+
 ~~~
 
-DEFAULT LIDA EM TODOS OS READALL
-CreateSymbol ListID as QueryParam
+DEFAULT LIDA EM TODOS OS READALL -- Como saber se o cache está valido? DONE DONE
+CreateSymbol ListID as QueryParam DONE DONE
+-- middleware
+-- Refatorar
 
