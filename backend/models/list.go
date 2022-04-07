@@ -76,7 +76,8 @@ func (l *List) ReadAllLists(db *gorm.DB, userID int) ([]List, error) {
 	return lists, nil
 }
 
-func (l *List) UpdateList(db *gorm.DB, id int) (*List, error) {
+func (l *List) UpdateList(db *gorm.DB, userID int, id int) (*List, error) {
+	l.UserID = uint(userID)
 	//Gets list and validates inexistence
 	var list List
 	if err := db.Where("user_id=? AND id=?", l.UserID, id).Find(&list).Error; err != nil {
@@ -102,8 +103,8 @@ func (l *List) UpdateList(db *gorm.DB, id int) (*List, error) {
 	return &list, nil
 }
 
-func (l *List) DeleteListByID(db *gorm.DB, id int) error {
-	db.Where("id=?", id).Find(&l)
+func (l *List) DeleteListByID(db *gorm.DB, userID int, id int) error {
+	db.Where("user_id=? AND id=?", userID, id).Find(&l)
 	if l.ID == 0 {
 		return errors.New("List Not Found")
 	}
