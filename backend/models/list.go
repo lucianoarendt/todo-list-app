@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 
 	"gorm.io/gorm"
@@ -113,4 +114,12 @@ func (l *List) DeleteListByID(db *gorm.DB, userID int, id int) error {
 		return err
 	}
 	return nil
+}
+
+func (l List) MarshalBinary() ([]byte, error) {
+	return json.Marshal(l)
+}
+
+func (l *List) Unmarshal(jsonList string) error {
+	return json.Unmarshal([]byte(jsonList), l)
 }

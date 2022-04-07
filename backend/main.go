@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/rafaelmf3/todo-list/database"
+	"github.com/rafaelmf3/todo-list/models"
 	"github.com/rafaelmf3/todo-list/routes"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,11 +24,20 @@ func main() {
 	pong, err := client.Ping().Result()
 	fmt.Println(pong, err)
 
-	err = client.Set("teste", "Testando", 0).Err()
-
+	list := models.List{Name: "testando_list"}
+	err = client.Set("teste", list, 0).Err()
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	val, err := client.Get("teste").Result()
+	fmt.Println(val)
+	if err != nil {
+		fmt.Println(err)
+	}
+	listCache := models.List{}
+	listCache.Unmarshal(val)
+	fmt.Println(listCache.Name)
 
 	app := fiber.New()
 
