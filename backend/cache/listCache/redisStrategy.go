@@ -32,7 +32,7 @@ func (c *cacheRedisStrategy) CreateOnCache(list models.List) error {
 	return nil
 }
 
-func (c *cacheRedisStrategy) ReadFromCache(userID int, listID int, getDataFrom func() (models.List, error)) (*models.List, error) {
+func (c *cacheRedisStrategy) TryReadingFromCache(userID int, listID int, elseGetDataFrom func() (models.List, error)) (*models.List, error) {
 	_, cacheKey := mountKeys(userID, listID)
 
 	json, err := c.cache.Get(cacheKey).Result()
@@ -40,7 +40,7 @@ func (c *cacheRedisStrategy) ReadFromCache(userID int, listID int, getDataFrom f
 	var list models.List
 	if err == redis.Nil {
 		var err error
-		list, err = getDataFrom()
+		list, err = elseGetDataFrom()
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func (c *cacheRedisStrategy) DeleteOnCache(list models.List) error {
 	return c.cache.Del(cacheKey).Err()
 }
 
-func (c *cacheRedisStrategy) ReadAllFromCache(userID int, getDataFrom func() ([]models.List, error)) ([]models.List, error) {
+func (c *cacheRedisStrategy) TryReadingAllFromCache(userID int, elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) {
 	userKey, _ := mountKeys(userID, -1)
 	_, err := c.cache.Get(userKey).Result()
 
@@ -85,7 +85,7 @@ func (c *cacheRedisStrategy) ReadAllFromCache(userID int, getDataFrom func() ([]
 
 	var lists []models.List
 	if err == redis.Nil {
-		lists, err = getDataFrom()
+		lists, err = elseGetDataFrom()
 		if err != nil {
 			return nil, err
 		}
@@ -103,8 +103,8 @@ func (c *cacheRedisStrategy) ReadAllFromCache(userID int, getDataFrom func() ([]
 	return lists, nil
 }
 
-func (c *cacheRedisStrategy) ReadAllDefaultFromCache() error {
-	return nil
+func (c *cacheRedisStrategy) ReadAllDefaultFromCache() ([]models.List, error) {
+	return nil, nil
 }
 
 func (c *cacheRedisStrategy) CreateSymbolOnCache(userID int, symbol models.Symbol) error {

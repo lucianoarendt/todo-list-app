@@ -92,7 +92,7 @@ func (l *listServiceImpl) Read(c *fiber.Ctx) error {
 	userID, _ := strconv.Atoi(claims.Issuer)
 	//---------------
 
-	list, err := l.cacheHandler.ReadFromCache(userID, id,
+	list, err := l.cacheHandler.TryReadingFromCache(userID, id,
 		func() (models.List, error) {
 			var list models.List
 			err := list.ReadListById(database.DB, userID, id)
@@ -121,7 +121,7 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error { //totest
 	userID, _ := strconv.Atoi(claims.Issuer)
 	//---------------
 
-	lists, err := l.cacheHandler.ReadAllFromCache(userID,
+	lists, err := l.cacheHandler.TryReadingAllFromCache(userID,
 		func() ([]models.List, error) {
 			list := models.List{}
 			return list.ReadAllLists(database.DB, userID)

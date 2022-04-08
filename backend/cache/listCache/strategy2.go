@@ -36,14 +36,14 @@ func (c *cacheStrategy2) CreateOnCache(list models.List) error {
 	return nil
 }
 
-func (c *cacheStrategy2) ReadFromCache(userID int, listID int, getDataFrom func() (models.List, error)) (*models.List, error) {
+func (c *cacheStrategy2) TryReadingFromCache(userID int, listID int, elseGetDataFrom func() (models.List, error)) (*models.List, error) {
 	_, listKey := mountKeys(userID, listID)
 	listCache, existsOnCache := c.cache.Get(listKey)
 
 	var err error
 	var list models.List
 	if !existsOnCache {
-		list, err = getDataFrom()
+		list, err = elseGetDataFrom()
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func (c *cacheStrategy2) DeleteOnCache(list models.List) error {
 	return nil
 }
 
-func (c *cacheStrategy2) ReadAllFromCache(userID int, getDataFrom func() ([]models.List, error)) ([]models.List, error) {
+func (c *cacheStrategy2) TryReadingAllFromCache(userID int, elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) {
 
 	userKey, _ := mountKeys(userID, -1)
 
@@ -105,15 +105,13 @@ func (c *cacheStrategy2) ReadAllFromCache(userID int, getDataFrom func() ([]mode
 
 	if !existsOnCache {
 		var err error
-		lists, err = getDataFrom()
+		lists, err = elseGetDataFrom()
 		if err != nil {
 			return nil, err
 		}
 
 		ids := make([]string, len(lists))
 		for i := range lists {
-			lists[i].PopulateWithSymbols(database.DB)
-
 			ids[i] = strconv.Itoa(int(lists[i].ID))
 			c.cache.SetDefault(fmt.Sprintf("%s_%d", userKey, lists[i].ID), lists[i])
 		}
@@ -123,8 +121,8 @@ func (c *cacheStrategy2) ReadAllFromCache(userID int, getDataFrom func() ([]mode
 	return lists, nil
 }
 
-func (c *cacheStrategy2) ReadAllDefaultFromCache() error {
-	return nil
+func (c *cacheStrategy2) ReadAllDefaultFromCache() ([]models.List, error) {
+	return nil, nil
 }
 
 func (c *cacheStrategy2) CreateSymbolOnCache(userID int, symbol models.Symbol) error {

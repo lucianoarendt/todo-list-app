@@ -28,7 +28,11 @@ ReadAll -> all (OK)
 -- middleware
 -- Refatorar ReadAllCache, Update, CreateSymbol
 
+Update isDefault editavel?
+CreateSymbolOnCache listID on symbol param return err if nil
+DeleteFromCache (List ou userID e id)
 Create, Update and Delete default list in cache
 CreateSymbol lista inexistente
 Symbols Delete user validator
 ReadAllDefault 
+TryReadingFromCache -> TryReadingFromCache(id, elseGetFrom(){})

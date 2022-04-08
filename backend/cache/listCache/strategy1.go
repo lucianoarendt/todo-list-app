@@ -27,14 +27,14 @@ func (c *cacheStrategy1) CreateOnCache(list models.List) error {
 	return nil
 }
 
-func (c *cacheStrategy1) ReadFromCache(userID int, listID int, getDataFrom func() (models.List, error)) (*models.List, error) {
+func (c *cacheStrategy1) TryReadingFromCache(userID int, listID int, elseGetDataFrom func() (models.List, error)) (*models.List, error) {
 	_, cacheKey := mountKeys(userID, listID)
 	listCache, existsOnCache := c.cache.Get(cacheKey)
 
 	var list models.List
 	if !existsOnCache {
 		var err error
-		list, err = getDataFrom()
+		list, err = elseGetDataFrom()
 		if err != nil {
 			return nil, err
 		}
@@ -72,20 +72,19 @@ func (c *cacheStrategy1) DeleteOnCache(list models.List) error {
 	return nil
 }
 
-func (c *cacheStrategy1) ReadAllFromCache(userID int, getDataFrom func() ([]models.List, error)) ([]models.List, error) {
+func (c *cacheStrategy1) TryReadingAllFromCache(userID int, elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) {
 	userKey, _ := mountKeys(userID, -1)
 	_, existsOnCache := c.cache.Get(userKey)
 
 	var lists []models.List
 	if !existsOnCache {
 		var err error
-		lists, err = getDataFrom()
+		lists, err = elseGetDataFrom()
 		if err != nil {
 			return nil, err
 		}
 
 		for i := range lists {
-			lists[i].PopulateWithSymbols(database.DB)
 			c.cache.SetDefault(fmt.Sprintf("%s_%d", userKey, lists[i].ID), lists[i])
 		}
 		c.cache.SetDefault(userKey, true)
@@ -95,8 +94,8 @@ func (c *cacheStrategy1) ReadAllFromCache(userID int, getDataFrom func() ([]mode
 	return lists, nil
 }
 
-func (c *cacheStrategy1) ReadAllDefaultFromCache() error {
-	return nil
+func (c *cacheStrategy1) ReadAllDefaultFromCache() ([]models.List, error) {
+	return nil, nil
 }
 
 func (c *cacheStrategy1) CreateSymbolOnCache(userID int, symbol models.Symbol) error {

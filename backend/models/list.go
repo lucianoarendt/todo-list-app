@@ -16,6 +16,38 @@ type List struct {
 	Symbols   []Symbol `json:"symbols" db:"symbols" gorm:"foreignKey:ListID"`
 }
 
+func (l *List) Equals(list List) bool {
+	if l.ID != list.ID {
+		return false
+	}
+
+	if l.UserID != list.UserID {
+		return false
+	}
+
+	if l.IsDefault != list.IsDefault {
+		return false
+	}
+
+	if l.Name != list.Name {
+		return false
+	}
+
+	for _, s := range l.Symbols {
+		if !list.Contains(s) {
+			return false
+		}
+	}
+
+	for _, s := range list.Symbols {
+		if !l.Contains(s) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (l *List) Contains(s Symbol) bool {
 	for _, e := range l.Symbols {
 		if e == s {
@@ -72,6 +104,10 @@ func (l *List) ReadAllLists(db *gorm.DB, userID int) ([]List, error) {
 
 	if err := db.Where("user_id=? and is_default=0", userID).Find(&lists).Error; err != nil {
 		return nil, err
+	}
+
+	for i := range lists {
+		lists[i].PopulateWithSymbols(db)
 	}
 
 	return lists, nil

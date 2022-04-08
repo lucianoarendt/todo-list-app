@@ -9,11 +9,11 @@ import (
 
 type ListCacheService interface {
 	CreateOnCache(list models.List) error
-	ReadFromCache(userID int, listID int, getDataFrom func() (models.List, error)) (*models.List, error) //todo
+	TryReadingFromCache(userID int, listID int, elseGetDataFrom func() (models.List, error)) (*models.List, error) //todo
 	UpdateOnCache(list models.List) (*models.List, error)
 	DeleteOnCache(list models.List) error
-	ReadAllFromCache(userID int, getDataFrom func() ([]models.List, error)) ([]models.List, error) //todo
-	ReadAllDefaultFromCache() error
+	TryReadingAllFromCache(userID int, elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) //todo
+	ReadAllDefaultFromCache() ([]models.List, error)                                                         //todo                                                                        //todo
 	CreateSymbolOnCache(userID int, symbol models.Symbol) error
 	DeleteSymbolOnCache(userID int, symbol models.Symbol) error
 }
