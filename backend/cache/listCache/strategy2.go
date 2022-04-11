@@ -121,8 +121,20 @@ func (c *cacheStrategy2) TryReadingAllFromCache(userID int, elseGetDataFrom func
 	return lists, nil
 }
 
-func (c *cacheStrategy2) ReadAllDefaultFromCache() ([]models.List, error) {
-	return nil, nil
+func (c *cacheStrategy2) ReadAllDefaultFromCache(elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) {
+	var lists []models.List
+
+	listsCache, existsOnCache := c.cache.Get("default")
+
+	if !existsOnCache {
+		lists, _ = elseGetDataFrom()
+		c.cache.SetDefault("default", lists) //Set("default", lists, DurationX)
+
+	} else {
+		lists = listsCache.([]models.List)
+	}
+
+	return lists, nil
 }
 
 func (c *cacheStrategy2) CreateSymbolOnCache(userID int, symbol models.Symbol) error {

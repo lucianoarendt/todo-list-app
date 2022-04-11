@@ -53,3 +53,11 @@ func BenchmarkListCacheStrategy2CreateSymbol(b *testing.B) {
 func BenchmarkListCacheStrategy2DeleteSymbol(b *testing.B) {
 	stS2.benchmarkListCacheServiceDeleteSymbol(b)
 }
+
+func BenchmarkListCacheStrategy2ReadAllDefaultNoCache(b *testing.B) {
+	stS2.benchMarkListCacheServiceReadAllDefaultNoCache(b)
+}
+
+func BenchmarkListCacheStrategy2ReadAllDefaultNoCacheAndWithCache(b *testing.B) {
+	stS2.benchMarkListCacheServiceReadAllDefaultNoCacheAndWithCache(b)
+}

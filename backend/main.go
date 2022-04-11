@@ -35,9 +35,13 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	listCache := models.List{}
 	listCache.Unmarshal(val)
 	fmt.Println(listCache.Name)
+
+	val, err = client.Get("naotem").Result()
+	fmt.Println(val, err)
 
 	app := fiber.New()
 

@@ -52,3 +52,11 @@ func BenchmarkListCacheRedisStrategyCreateSymbol(b *testing.B) {
 func BenchmarkListCacheRedisStrategyDeleteSymbol(b *testing.B) {
 	stRedis.benchmarkListCacheServiceDeleteSymbol(b)
 }
+
+func BenchmarkListCacheRedisStrategyReadAllDefaultNoCache(b *testing.B) {
+	stRedis.benchMarkListCacheServiceReadAllDefaultNoCache(b)
+}
+
+func BenchmarkListCacheRedisStrategyReadAllDefaultNoCacheAndWithCache(b *testing.B) {
+	stRedis.benchMarkListCacheServiceReadAllDefaultNoCacheAndWithCache(b)
+}

@@ -152,6 +152,18 @@ func (l *List) DeleteListByID(db *gorm.DB, userID int, id int) error {
 	return nil
 }
 
+func (l *List) ReadAllDefault(db *gorm.DB) ([]List, error) {
+	var lists []List
+
+	db.Where("is_default=1").Find(&lists)
+
+	for i := range lists {
+		db.Where("list_id=?", lists[i].ID).Find(&lists[i].Symbols)
+	}
+
+	return lists, nil
+}
+
 func (l List) MarshalBinary() ([]byte, error) {
 	return json.Marshal(l)
 }

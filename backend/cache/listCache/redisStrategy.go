@@ -1,6 +1,7 @@
 package listCache
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-redis/redis"
@@ -46,8 +47,10 @@ func (c *cacheRedisStrategy) TryReadingFromCache(userID int, listID int, elseGet
 		}
 
 		c.cache.Set(cacheKey, list, 0)
-	} else {
+	} else if err == nil {
 		list.Unmarshal(json)
+	} else {
+		return nil, err
 	}
 	return &list, nil
 }
@@ -60,8 +63,10 @@ func (c *cacheRedisStrategy) UpdateOnCache(list models.List) (*models.List, erro
 			var cacheAsList models.List
 			cacheAsList.Unmarshal(jsonList)
 			list.Symbols = cacheAsList.Symbols
-		} else {
+		} else if err == redis.Nil {
 			list.PopulateWithSymbols(database.DB)
+		} else {
+			return nil, err
 		}
 	}
 	//-----------------
@@ -91,20 +96,43 @@ func (c *cacheRedisStrategy) TryReadingAllFromCache(userID int, elseGetDataFrom 
 		}
 
 		for i := range lists {
-			lists[i].PopulateWithSymbols(database.DB)
 			pairs = append(pairs, fmt.Sprintf("%s_%d", userKey, lists[i].ID), lists[i])
 		}
 		pairs = append(pairs, userKey, true)
 		c.cache.MSet(pairs...)
-	} else {
+	} else if err == nil {
 		lists, _ = c.getCacheLists(userKey)
+	} else {
+		return nil, err
 	}
 
 	return lists, nil
 }
 
-func (c *cacheRedisStrategy) ReadAllDefaultFromCache() ([]models.List, error) {
-	return nil, nil
+func (c *cacheRedisStrategy) ReadAllDefaultFromCache(elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) {
+	jsonList, err := c.cache.Get(defaultKey).Result()
+
+	var lists []models.List
+	if err == redis.Nil {
+		var err error
+		lists, err = elseGetDataFrom()
+		if err != nil {
+			return nil, err
+		}
+
+		marshaledLists, _ := json.Marshal(lists)
+
+		err = c.cache.Set(defaultKey, marshaledLists, 0).Err()
+		if err != nil {
+			return nil, err
+		}
+	} else if err == nil {
+		json.Unmarshal([]byte(jsonList), &lists)
+	} else {
+		return nil, err
+	}
+
+	return lists, nil
 }
 
 func (c *cacheRedisStrategy) CreateSymbolOnCache(userID int, symbol models.Symbol) error {

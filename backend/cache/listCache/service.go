@@ -13,10 +13,12 @@ type ListCacheService interface {
 	UpdateOnCache(list models.List) (*models.List, error)
 	DeleteOnCache(list models.List) error
 	TryReadingAllFromCache(userID int, elseGetDataFrom func() ([]models.List, error)) ([]models.List, error) //todo
-	ReadAllDefaultFromCache() ([]models.List, error)                                                         //todo                                                                        //todo
+	ReadAllDefaultFromCache(elseGetDataFrom func() ([]models.List, error)) ([]models.List, error)            //todo                                                                        //todo
 	CreateSymbolOnCache(userID int, symbol models.Symbol) error
 	DeleteSymbolOnCache(userID int, symbol models.Symbol) error
 }
+
+const defaultKey = "default"
 
 func mountKeys(userID int, listID int) (string, string) {
 	userKey := strconv.Itoa(userID)

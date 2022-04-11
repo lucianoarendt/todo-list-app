@@ -128,17 +128,28 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error { //totest
 		l.handleListError(err, c)
 	}
 
-	lists = append(lists, l.readAllDefaultLists()...)
+	defaultLists, _ := l.cacheHandler.ReadAllDefaultFromCache(
+		func() ([]models.List, error) {
+			var list models.List
+
+			return list.ReadAllDefault(database.DB)
+		},
+	)
+
+	lists = append(lists, defaultLists...)
 	return c.JSON(lists)
 }
 
 func (l *listServiceImpl) Update(c *fiber.Ctx) error {
+	//validates query param
 	id, err := strconv.Atoi(c.Query("id"))
+
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "error converting query parameter to an int",
 		})
 	}
+	//-----------------
 
 	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
@@ -149,6 +160,8 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+
+	userID, _ := strconv.Atoi(claims.Issuer)
 	//---------------
 
 	//Mounts Body
@@ -156,11 +169,8 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 	if err := c.BodyParser(&bodyData); err != nil {
 		return err
 	}
-
-	userID, _ := strconv.Atoi(claims.Issuer)
 	//------------
 
-	//Gets list and validates inexistence
 	list, err := bodyData.UpdateList(database.DB, userID, id)
 	if err != nil {
 		return l.handleListError(err, c)
@@ -172,12 +182,15 @@ func (l *listServiceImpl) Update(c *fiber.Ctx) error {
 }
 
 func (l *listServiceImpl) Delete(c *fiber.Ctx) error {
+	//validates query param
 	id, err := strconv.Atoi(c.Query("id"))
+
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "error converting query parameter to an int",
 		})
 	}
+	//-----------------
 
 	//Authenticates
 	claims, err := middleware.Auth(l.secret, c)
@@ -253,6 +266,7 @@ func (l *listServiceImpl) CreateSymbol(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+	userID, _ := strconv.Atoi(claims.Issuer)
 	//-------------
 
 	//Mounts body
@@ -260,7 +274,6 @@ func (l *listServiceImpl) CreateSymbol(c *fiber.Ctx) error {
 	if err := c.BodyParser(&bodyData); err != nil {
 		return err
 	}
-	userID, _ := strconv.Atoi(claims.Issuer)
 	//-------------
 
 	if err := bodyData.CreateSymbol(database.DB, listID); err != nil {
@@ -270,26 +283,6 @@ func (l *listServiceImpl) CreateSymbol(c *fiber.Ctx) error {
 	l.cacheHandler.CreateSymbolOnCache(userID, bodyData)
 
 	return c.JSON(bodyData)
-}
-
-func (l *listServiceImpl) readAllDefaultLists() []models.List { //totest
-	var lists []models.List
-
-	listsCache, existsOnCache := l.cache.Get("default")
-
-	if !existsOnCache {
-		database.DB.Where("is_default=1").Find(&lists)
-
-		for i := range lists {
-			database.DB.Where("list_id=?", lists[i].ID).Find(&lists[i].Symbols)
-		}
-		l.cache.SetDefault("default", lists) //Set("default", lists, DurationX)
-
-	} else {
-		lists = listsCache.([]models.List)
-	}
-
-	return lists
 }
 
 func (l *listServiceImpl) handleListError(err error, c *fiber.Ctx) error {

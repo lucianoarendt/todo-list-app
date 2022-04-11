@@ -194,6 +194,39 @@ func (st *listCacheServiceTester) benchmarkListCacheServiceDeleteSymbol(b *testi
 	}
 }
 
+func (st *listCacheServiceTester) benchMarkListCacheServiceReadAllDefaultNoCache(b *testing.B) {
+	// run the Fib function b.N times
+	for n := 0; n < b.N; n++ {
+		fromElse, _ := st.cacheHandler.ReadAllDefaultFromCache(
+			func() ([]models.List, error) {
+				return []models.List{testList}, nil
+			})
+
+		if len(fromElse) != 1 || !fromElse[0].Equals(testList) {
+			b.Errorf("%sReadAllNoCache want=%v, got=%v", st.logAs, []models.List{testList}, fromElse)
+		}
+	}
+}
+
+func (st *listCacheServiceTester) benchMarkListCacheServiceReadAllDefaultNoCacheAndWithCache(b *testing.B) {
+	// run the Fib function b.N times
+	for n := 0; n < b.N; n++ {
+		fromElse, _ := st.cacheHandler.ReadAllDefaultFromCache(
+			func() ([]models.List, error) {
+				return []models.List{testList}, nil
+			})
+		fromCache, _ := st.cacheHandler.ReadAllDefaultFromCache(
+			func() ([]models.List, error) {
+				return []models.List{}, nil
+			})
+
+		if len(fromElse) != 1 || !fromElse[0].Equals(testList) ||
+			len(fromCache) != 1 || !fromCache[0].Equals(testList) {
+			b.Errorf("%sReadAllNoCache want=%v, got=%v,%v", st.logAs, []models.List{testList}, fromElse, fromCache)
+		}
+	}
+}
+
 func emptyElseGetDataFrom() (models.List, error) {
 	return models.List{}, nil
 }

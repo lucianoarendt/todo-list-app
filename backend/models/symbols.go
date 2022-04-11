@@ -22,6 +22,11 @@ func (s *Symbol) CreateSymbol(db *gorm.DB, listID int) error {
 	}
 	//-------------
 
+	db.Model(&List{}).Where("id=?", listID).Count(&count)
+	if count <= 0 {
+		return errors.New("List Not Found")
+	}
+
 	//validates inexistence
 	db.Where("symbol=? AND list_id=?", s.Symbol, listID).Find(&s)
 	if s.ID != 0 {

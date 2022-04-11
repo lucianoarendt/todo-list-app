@@ -51,6 +51,8 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 			"message": "unauthenticated",
 		})
 	}
+
+	userID, _ := strconv.Atoi(claims.Issuer)
 	//---------------
 
 	//mounts body
@@ -59,7 +61,6 @@ func (l *listServiceImpl) Create(c *fiber.Ctx) error {
 		return err
 	}
 
-	userID, _ := strconv.Atoi(claims.Issuer)
 	bodyData.UserID = uint(userID)
 	//--------------
 
@@ -131,7 +132,14 @@ func (l *listServiceImpl) ReadAll(c *fiber.Ctx) error { //totest
 		return l.handleListError(err, c)
 	}
 
-	lists = append(lists, l.readAllDefaultLists()...)
+	defaultLists, _ := l.cacheHandler.ReadAllDefaultFromCache(
+		func() ([]models.List, error) {
+			var list models.List
+
+			return list.ReadAllDefault(database.DB)
+		},
+	)
+	lists = append(lists, defaultLists...)
 	return c.JSON(lists)
 }
 
@@ -279,26 +287,6 @@ func (l *listServiceImpl) CreateSymbol(c *fiber.Ctx) error {
 
 	l.cacheHandler.CreateSymbolOnCache(userID, bodyData)
 	return c.JSON(bodyData)
-}
-
-func (l *listServiceImpl) readAllDefaultLists() []models.List { //totest
-	var lists []models.List
-
-	listsCache, existsOnCache := l.cache.Get("default")
-
-	if !existsOnCache {
-		database.DB.Where("is_default=1").Find(&lists)
-
-		for i := range lists {
-			lists[i].PopulateWithSymbols(database.DB)
-		}
-		l.cache.SetDefault("default", lists) //Set("default", lists, DurationX)
-
-	} else {
-		lists = listsCache.([]models.List)
-	}
-
-	return lists
 }
 
 func (l *listServiceImpl) handleListError(err error, c *fiber.Ctx) error {
