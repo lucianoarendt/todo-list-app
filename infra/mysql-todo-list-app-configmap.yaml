@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-todo-list-app-configmap
+data:
+  MYSQL_ROOT_PASSWORD: root
+  MYSQL_DATABASE: db
+  DATABASE_HOST: db
+  MYSQL_USER: mysql
+  MYSQL_PASSWORD: root
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8

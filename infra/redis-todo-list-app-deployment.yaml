@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-todo-list-app-deployment
+spec:
+  template:
+    metadata:
+      name: redis-todo-list-app
+      labels:
+        app: redis-todo-list-app
+    spec:
+      containers:
+        - name: redis-todo-list-app-container
+          image: redis
+          restart: always
+          command: ["redis-server"]
+          ports:
+            - containerPort: 6379
+          
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-todo-list-app

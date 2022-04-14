@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-todo-list-app-deployment
+spec:
+  template:
+    metadata:
+      name: mysql-todo-list-app
+      labels:
+        app: mysql-todo-list-app
+    spec:
+      containers:
+        - name: mysql-todo-list-app-container
+          image: 'mysql:5.7'
+          ports:
+            - containerPort: 3306
+          volumes:
+            - ./data:/var/lib/mysql
+          envFrom:
+            - configMapRef:
+                name: mysql-todo-list-app-configmap
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-todo-list-app
