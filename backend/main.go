@@ -10,7 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
+var PodHash string
+
 func main() {
+
 	database.Connect()
 
 	app := fiber.New()

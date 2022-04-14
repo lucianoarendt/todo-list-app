@@ -3,6 +3,7 @@ package listCache
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/go-redis/redis"
 	"github.com/rafaelmf3/todo-list/database"
@@ -15,8 +16,8 @@ type cacheRedisStrategy struct {
 
 func NewCacheRedisStrategy() ListCacheService {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
+		Addr:     fmt.Sprintf("%s:6379", os.Getenv("REDIS_ADDRESS")),
+		Password: os.Getenv("REDIS_PASS"),
 		DB:       0,
 	})
 

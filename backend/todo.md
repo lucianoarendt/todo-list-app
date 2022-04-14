@@ -36,3 +36,7 @@ Create, Update and Delete default list in cache
 Refactor DDD:
     CreateSymbolOnCache listID on symbol param return err if nil
     Symbols Delete user validator
+
+K8S:
+    LivenessProbe
+    ReadinessProbe

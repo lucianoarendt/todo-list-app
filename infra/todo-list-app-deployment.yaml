@@ -16,5 +16,14 @@ spec:
       containers:
         - name: todo-list-app-container
           image: lucianoarendt/todo-list-app
+          command: 
+          - sh
+          - -c
+          - |
+            o=${HOSTNAME##*-}
+            ./out/todo-list-app -pod=$o
           ports:
             - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: todo-list-app-configmap

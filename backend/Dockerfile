@@ -14,4 +14,4 @@ RUN go build -o ./out/todo-list-app .
 
 EXPOSE 8001
 
-CMD [ "./out/todo-list-app" ]
+##CMD [ "./out/todo-list-app" ]

@@ -14,11 +14,16 @@ spec:
           image: 'mysql:5.7'
           ports:
             - containerPort: 3306
-          volumes:
-            - ./data:/var/lib/mysql
+          volumeMounts:
+            - name: mysql-todo-list-app-volume
+              mountPath: /var/lib/mysql
           envFrom:
             - configMapRef:
                 name: mysql-todo-list-app-configmap
+      volumes:
+        - name: mysql-todo-list-app-volume
+          persistentVolumeClaim:
+            claimName: mysql-todo-list-app-pvc
   replicas: 1
   selector:
     matchLabels:
